@@ -1,0 +1,19 @@
+# node dependencies
+node_modules/
+client/node_modules/
+
+# IDE / editor folders
+.idea/
+.vscode/
+
+# cache / logs
+*.log
+client/.cache/
+client/.eslintcache
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# local data
+data.json
