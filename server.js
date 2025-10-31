@@ -23,7 +23,7 @@ function saveUsers() {
     fs.writeFileSync(DB_FILE, JSON.stringify(users, null, 2));
 }
 
-// Simulate a simple "logged-in user" variable (just memory)
+// Simulate login (no sessions)
 let currentUser = null;
 
 // Register
@@ -47,18 +47,19 @@ app.post("/login", async (req, res) => {
     const match = await bcrypt.compare(password, users[username].password);
     if (!match) return res.send("Wrong password");
 
-    currentUser = username; // store who is logged in
+    currentUser = username; // ✅ store logged-in user
     res.send(`Welcome, ${username}!`);
 });
 
-// Protected route for admin only
+// Show users (only admin)
 app.get("/users", (req, res) => {
     if (currentUser !== "admin") {
-        return res.send("Access denied. Only admin can view users.");
+        return res.status(403).send("Access denied");
     }
-    res.json(users);
+    const userList = Object.keys(users);
+    res.json(userList);
 });
 
 app.listen(PORT, () =>
-    console.log(`Server running on http://localhost:${PORT}`)
+    console.log(`✅ Server running on http://localhost:${PORT}`)
 );
