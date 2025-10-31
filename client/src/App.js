@@ -13,7 +13,8 @@ function App() {
         });
         const text = await res.text();
         setMessage(text);
-        if (text.startsWith("Welcome")) setLoggedIn(username);
+        if (text.startsWith("Welcome"))
+            setLoggedIn(username);
     }
 
     async function viewUsers() {
