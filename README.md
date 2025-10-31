@@ -11,19 +11,6 @@ A simple full-stack authentication system built using **Node.js**, **Express**, 
 
 ---
 
-## 🧩 Project Structure
-Authentication-System/
-├── client/ # React frontend
-│ ├── src/ # React components
-│ ├── public/ # Static files
-│ └── package.json # Frontend dependencies
-├── server.js # Express backend
-├── data.json # Local JSON database
-├── package.json # Backend dependencies + concurrently setup
-└── .gitignore # Ignore unnecessary files
-
----
-
 ## ⚙️ Installation & Setup
 
 ### 1️⃣ Clone the repository
