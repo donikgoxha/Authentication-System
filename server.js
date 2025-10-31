@@ -8,29 +8,21 @@ const PORT = 5000;
 const DB_FILE = "./data.json";
 
 app.use(express.json());
-app.use(
-    cors({
-        origin: "http://localhost:5173",
-        credentials: true,
-    })
-);
+app.use(cors({
+    origin: "http://localhost:5173", credentials: true,
+}));
 
-let users = fs.existsSync(DB_FILE)
-    ? JSON.parse(fs.readFileSync(DB_FILE))
-    : {};
+let users = fs.existsSync(DB_FILE) ? JSON.parse(fs.readFileSync(DB_FILE)) : {};
 
 function saveUsers() {
     fs.writeFileSync(DB_FILE, JSON.stringify(users, null, 2));
 }
 
-// Simulate login (no sessions)
 let currentUser = null;
 
-// Register
 app.post("/register", async (req, res) => {
     const {username, password} = req.body;
-    if (!username || !password)
-        return res.send("Please enter username and password");
+    if (!username || !password) return res.send("Please enter username and password");
     if (users[username]) return res.send("Username already exists");
 
     const hash = await bcrypt.hash(password, 10);
@@ -39,7 +31,6 @@ app.post("/register", async (req, res) => {
     res.send("Registered successfully");
 });
 
-// Login
 app.post("/login", async (req, res) => {
     const {username, password} = req.body;
     if (!users[username]) return res.send("User not found");
@@ -47,11 +38,10 @@ app.post("/login", async (req, res) => {
     const match = await bcrypt.compare(password, users[username].password);
     if (!match) return res.send("Wrong password");
 
-    currentUser = username; // ✅ store logged-in user
+    currentUser = username;
     res.send(`Welcome, ${username}!`);
 });
 
-// Show users (only admin)
 app.get("/users", (req, res) => {
     if (currentUser !== "admin") {
         return res.status(403).send("Access denied");
@@ -60,6 +50,4 @@ app.get("/users", (req, res) => {
     res.json(userList);
 });
 
-app.listen(PORT, () =>
-    console.log(`✅ Server running on http://localhost:${PORT}`)
-);
+app.listen(PORT, () => console.log(`✅ Server running on http://localhost:${PORT}`));
