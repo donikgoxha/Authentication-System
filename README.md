@@ -13,7 +13,7 @@ A simple full-stack authentication system built using **Node.js**, **Express**, 
 
 ## ⚙️ Installation & Setup
 
-### 1️⃣ Clone the repository
+### Clone the repository
 ```bash
 git clone https://github.com/donikgoxha/Authentication-System.git
 cd Authentication-System

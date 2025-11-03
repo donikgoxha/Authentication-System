@@ -13,8 +13,7 @@ function App() {
         });
         const text = await res.text();
         setMessage(text);
-        if (text.startsWith("Welcome"))
-            setLoggedIn(username);
+        if (text.startsWith("Welcome")) setLoggedIn(username);
     }
 
     async function viewUsers() {
@@ -33,7 +32,7 @@ function App() {
             textAlign: "center",
             marginTop: "60px",
             fontFamily: "Segoe UI, sans-serif",
-            backgroundColor: "#f9fafc",
+            backgroundColor: "white",
             minHeight: "100vh",
             paddingTop: "40px",
         }}
@@ -41,13 +40,13 @@ function App() {
         <div
             style={{
                 display: "inline-block",
-                padding: "40px 60px",
+                padding: "30px 60px",
                 background: "white",
-                borderRadius: "15px",
-                boxShadow: "0 4px 15px rgba(0, 0, 0, 0.1)",
+                borderRadius: "20px",
+                boxShadow: "0 20px 15px rgba(0.5, 0.5, 0.5, 0.5)",
             }}
         >
-            <h2 style={{color: "#333", marginBottom: "25px"}}>Simple Auth</h2>
+            <h2 style={{color: "black", marginBottom: "25px"}}>Authentication System</h2>
 
             {!loggedIn ? (<>
                 <input
@@ -55,8 +54,8 @@ function App() {
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
                     style={{
-                        padding: "8px 12px",
-                        marginBottom: "15px",
+                        padding: "4px 10px",
+                        marginBottom: "12px",
                         borderRadius: "8px",
                         border: "1px solid #ccc",
                         width: "200px",
@@ -69,8 +68,8 @@ function App() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     style={{
-                        padding: "8px 12px",
-                        marginBottom: "15px",
+                        padding: "4px 10px",
+                        marginBottom: "12px",
                         borderRadius: "8px",
                         border: "1px solid #ccc",
                         width: "200px",
@@ -81,7 +80,7 @@ function App() {
                     onClick={() => send("/register")}
                     style={{
                         margin: "5px",
-                        padding: "8px 16px",
+                        padding: "4px 10px",
                         borderRadius: "8px",
                         border: "none",
                         backgroundColor: "#0078d7",
@@ -95,7 +94,7 @@ function App() {
                     onClick={() => send("/login")}
                     style={{
                         margin: "5px",
-                        padding: "8px 16px",
+                        padding: "4px 10px",
                         borderRadius: "8px",
                         border: "none",
                         backgroundColor: "#28a745",
@@ -156,7 +155,7 @@ function App() {
                         style={{
                             background: "#f1f1f1",
                             margin: "6px auto",
-                            padding: "8px 12px",
+                            padding: "2px 6px",
                             borderRadius: "8px",
                             width: "180px",
                             textAlign: "center",
