@@ -194,8 +194,13 @@ function App() {
     }
 
     return (<div style={{
-        minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", //background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        background: "white", fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif", padding: "20px"
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "white",
+        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+        padding: "20px"
     }}>
         <div style={{
             background: "white",
