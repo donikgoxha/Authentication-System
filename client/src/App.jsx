@@ -334,26 +334,6 @@ function App() {
                     <h3 style={{color: "#28a745", marginBottom: "20px"}}>
                         Welcome, {loggedIn}!
                     </h3>
-                    <br></br>
-                    {/*<div style={{*/}
-                    {/*    background: "#f8f9fa",*/}
-                    {/*    padding: "15px",*/}
-                    {/*    borderRadius: "10px",*/}
-                    {/*    marginBottom: "20px",*/}
-                    {/*    fontSize: "14px",*/}
-                    {/*    color: "#555"*/}
-                    {/*}}>*/}
-                    {/*    /!*<strong>Session ID:</strong>*!/*/}
-                    {/*    /!*<br/>*!/*/}
-                    {/*    /!*<code style={{*!/*/}
-                    {/*    /!*    fontSize: "12px", wordBreak: "break-all", display: "block", marginTop: "5px"*!/*/}
-                    {/*    /!*}}>*!/*/}
-                    {/*    /!*    {sessionId}*!/*/}
-                    {/*    /!*</code>*!/*/}
-                    {/*    /!*<div style={{marginTop: "10px", fontSize: "12px", color: "#666"}}>*!/*/}
-                    {/*    /!*    This session ID is also logged in the browser console (F12)*!/*/}
-                    {/*    /!*</div>*!/*/}
-                    {/*</div>*/}
                     <button
                         style={{...buttonStyle, background: "#dc3545"}}
                         onClick={logout}

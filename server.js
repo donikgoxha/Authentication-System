@@ -247,29 +247,6 @@ app.post("/logout", (req, res) => {
     });
 });
 
-// --- GET SESSION INFO (for debugging) ---
-app.get("/session-info", (req, res) => {
-    const sessionId = req.headers["x-session-id"];
-
-    if (!sessionId || !sessions[sessionId]) {
-        return res.json({
-            success: false, message: "No active session."
-        });
-    }
-
-    return res.json({
-        success: true, sessionId, username: sessions[sessionId].username, createdAt: sessions[sessionId].createdAt
-    });
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-    console.error("Uncaught error:", err);
-    res.status(500).json({
-        success: false, message: "Unexpected server error."
-    });
-});
-
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
     console.log(`Current users: ${Object.keys(users).length}`);
