@@ -1,23 +1,17 @@
 import React, {useState} from "react";
 
 function App() {
-    // Page state: "login" or "register"
     const [page, setPage] = useState("login");
-
-    // Form fields
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [confirm, setConfirm] = useState("");
     const [code, setCode] = useState("");
-
-    // UI state
     const [message, setMessage] = useState("");
     const [twoFA, setTwoFA] = useState(false);
     const [loggedIn, setLoggedIn] = useState(null);
     const [sessionId, setSessionId] = useState(null);
 
-    // Clear all form fields
     function clearFields() {
         setUsername("");
         setEmail("");
@@ -27,7 +21,6 @@ function App() {
         setMessage("");
     }
 
-    // Frontend validation for registration
     function validateRegistration() {
         if (!username || !email || !password || !confirm) {
             setMessage("All fields are required.");
@@ -72,12 +65,11 @@ function App() {
         return true;
     }
 
-    // Register new user
     async function register() {
         if (!validateRegistration()) return;
 
         try {
-            const res = await fetch("http://localhost:5000/register", {
+            const res = await fetch("http://localhost:5002/register", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({username, email, password, confirm}),
@@ -101,7 +93,6 @@ function App() {
         }
     }
 
-    // Login user
     async function login() {
         if (!username || !password) {
             setMessage("Username and password are required.");
@@ -109,7 +100,7 @@ function App() {
         }
 
         try {
-            const res = await fetch("http://localhost:5000/login", {
+            const res = await fetch("http://localhost:5002/login", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({username, password}),
@@ -138,7 +129,6 @@ function App() {
         }
     }
 
-    // Verify 2FA code
     async function verify2FA() {
         if (!code) {
             setMessage("Please enter the 2FA code.");
@@ -146,7 +136,7 @@ function App() {
         }
 
         try {
-            const res = await fetch("http://localhost:5000/verify-2fa", {
+            const res = await fetch("http://localhost:5002/verify-2fa", {
                 method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({username, code}),
             });
 
@@ -168,10 +158,9 @@ function App() {
         }
     }
 
-    // Logout user
     async function logout() {
         try {
-            await fetch("http://localhost:5000/logout", {
+            await fetch("http://localhost:5002/logout", {
                 method: "POST", headers: {"x-session-id": sessionId},
             });
 
@@ -186,7 +175,6 @@ function App() {
         }
     }
 
-    // Handle Enter key press
     function handleKeyPress(e, action) {
         if (e.key === "Enter") {
             action();
@@ -357,7 +345,6 @@ function App() {
     </div>);
 }
 
-// Styles
 const inputStyle = {
     width: "100%",
     padding: "12px 15px",
