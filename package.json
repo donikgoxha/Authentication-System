@@ -1,7 +1,7 @@
 {
-  "name": "auth-sha256",
+  "name": "auth-sys",
   "version": "1.0.0",
-  "description": "Full-stack authentication system using Node.js (SHA-256 hashing), Express, and React — supports registration, login, 2FA, and sessions.",
+  "description": "Full-stack authentication system using Node.js, Express, and React.",
   "main": "server.js",
   "type": "module",
   "scripts": {

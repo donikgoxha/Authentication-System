@@ -15,6 +15,10 @@ function App() {
     const [resources, setResources] = useState([]);
     const [selectedResource, setSelectedResource] = useState(null);
     const [jitDuration, setJitDuration] = useState(30);
+    const [showAdminPanel, setShowAdminPanel] = useState(false);
+    const [allUsers, setAllUsers] = useState([]);
+    const [selectedUser, setSelectedUser] = useState("");
+    const [selectedRole, setSelectedRole] = useState("");
 
     const API_URL = "http://localhost:5002";
 
@@ -150,10 +154,9 @@ function App() {
 
             if (data.twoFA) {
                 setTwoFA(true);
-                console.log(`🔐 Your 2FA code is: ${data.code}`);
-                console.log(`📧 Email sent! Check server console for preview link.`);
-                console.log(`⏰ Code expires in 5 minutes`);
-                setMessage("2FA code sent! Check email (or console for demo code).");
+                console.log(`Email sent! Check console for preview link.`);
+                console.log(`Code expires in 5 minutes`);
+                setMessage("2FA code sent! Check email.");
             } else if (data.success && data.sessionId) {
                 setLoggedIn(username);
                 setSessionId(data.sessionId);
@@ -260,6 +263,57 @@ function App() {
         }
     }
 
+    async function fetchAllUsers() {
+        try {
+            const res = await fetch(`${API_URL}/admin/users`, {
+                headers: {"x-session-id": sessionId}
+            });
+            const data = await res.json();
+            if (data.success) {
+                setAllUsers(data.users);
+            } else {
+                setMessage(data.message);
+            }
+        } catch (error) {
+            console.error("Error fetching users:", error);
+            setMessage("Server connection error.");
+        }
+    }
+
+    async function updateUserRole() {
+        if (!selectedUser || !selectedRole) {
+            setMessage("Please select both a user and a role.");
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_URL}/admin/update-role`, {
+                method: "POST", headers: {
+                    "Content-Type": "application/json", "x-session-id": sessionId
+                }, body: JSON.stringify({
+                    username: selectedUser, newRole: selectedRole
+                })
+            });
+
+            const data = await res.json();
+            setMessage(data.message);
+
+            if (data.success) {
+                fetchAllUsers(); // Refresh user list
+                setSelectedUser("");
+                setSelectedRole("");
+            }
+        } catch (error) {
+            console.error("Error updating role:", error);
+            setMessage("Server connection error.");
+        }
+    }
+
+    function openAdminPanel() {
+        setShowAdminPanel(true);
+        fetchAllUsers();
+    }
+
     function handleKeyPress(e, action) {
         if (e.key === "Enter") {
             action();
@@ -280,307 +334,417 @@ function App() {
     };
 
     return (<div style={{
-            minHeight: "100vh",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-            fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-            padding: "20px"
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "#999",
+        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+        padding: "20px"
+    }}>
+        <div style={{
+            background: "#fff",
+            borderRadius: "20px",
+            boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+            padding: "40px 30px",
+            maxWidth: loggedIn ? "800px" : "400px",
+            width: "100%"
         }}>
-            <div style={{
-                background: "white",
-                borderRadius: "20px",
-                boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
-                padding: "40px 30px",
-                maxWidth: loggedIn ? "800px" : "400px",
-                width: "100%"
-            }}>
-                <div style={{textAlign: "center", marginBottom: "30px"}}>
-                    <div style={{fontSize: "48px", marginBottom: "10px"}}>🔐</div>
-                    <h2 style={{color: "#333", margin: "0", fontSize: "24px", fontWeight: "600"}}>
-                        Secure Auth System
-                    </h2>
-                    <p style={{color: "#666", fontSize: "14px", margin: "5px 0 0 0"}}>
-                        {loggedIn ? "Role-Based Access Control" : "Email 2FA Protection"}
-                    </p>
+            <div style={{textAlign: "center"}}>
+                <div style={{fontSize: "40px"}}>
+                    Authentication System
                 </div>
+            </div>
 
-                {!loggedIn ? (<>
-                        {page === "login" ? (<div>
-                                <h3 style={{
-                                    textAlign: "center", color: "#555", marginBottom: "25px", fontWeight: "500"
-                                }}>
-                                    Sign In
-                                </h3>
+            {!loggedIn ? (<>
+                {page === "login" ? (<div>
+                    <h3 style={{
+                        textAlign: "center", color: "#000", marginBottom: "25px", fontWeight: "500"
+                    }}>
+                        Sign In
+                    </h3>
 
-                                <input
-                                    style={inputStyle}
-                                    placeholder="Username"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                    onKeyPress={(e) => handleKeyPress(e, login)}
-                                />
+                    <input
+                        style={inputStyle}
+                        placeholder="Username"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        onKeyPress={(e) => handleKeyPress(e, login)}
+                    />
 
-                                <input
-                                    style={inputStyle}
-                                    type="password"
-                                    placeholder="Password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    onKeyPress={(e) => handleKeyPress(e, login)}
-                                />
+                    <input
+                        style={inputStyle}
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        onKeyPress={(e) => handleKeyPress(e, login)}
+                    />
 
-                                {twoFA && (<div style={{marginTop: "20px"}}>
-                                        <div style={{
-                                            background: "#f0f4ff",
-                                            padding: "15px",
-                                            borderRadius: "10px",
-                                            marginBottom: "15px",
-                                            textAlign: "center"
-                                        }}>
-                                            <div style={{fontSize: "24px", marginBottom: "5px"}}>📧</div>
-                                            <p style={{
-                                                margin: "0", fontSize: "13px", color: "#667eea", fontWeight: "500"
-                                            }}>
-                                                Check your email for the verification code
-                                            </p>
-                                            <p style={{
-                                                margin: "5px 0 0 0", fontSize: "11px", color: "#999"
-                                            }}>
-                                                Demo: Check browser console (F12) for code
-                                            </p>
-                                        </div>
-                                        <input
-                                            style={{
-                                                ...inputStyle,
-                                                textAlign: "center",
-                                                fontSize: "20px",
-                                                letterSpacing: "5px"
-                                            }}
-                                            placeholder="000000"
-                                            value={code}
-                                            onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-                                            onKeyPress={(e) => handleKeyPress(e, verify2FA)}
-                                            maxLength={6}
-                                        />
-                                        <button style={buttonStyle} onClick={verify2FA}>
-                                            Verify Code
-                                        </button>
-                                        <button
-                                            style={{...buttonStyle, background: "#6c757d"}}
-                                            onClick={() => {
-                                                setTwoFA(false);
-                                                setCode("");
-                                                setMessage("");
-                                            }}
-                                        >
-                                            Cancel
-                                        </button>
-                                    </div>)}
-
-                                {!twoFA && (<>
-                                        <button style={buttonStyle} onClick={login}>
-                                            Login
-                                        </button>
-                                        <button
-                                            style={{...buttonStyle, background: "#6c757d"}}
-                                            onClick={() => {
-                                                setPage("register");
-                                                clearFields();
-                                            }}
-                                        >
-                                            Create Account
-                                        </button>
-                                    </>)}
-                            </div>) : (<div>
-                                <h3 style={{
-                                    textAlign: "center", color: "#555", marginBottom: "25px", fontWeight: "500"
-                                }}>
-                                    Create Account
-                                </h3>
-
-                                <input
-                                    style={inputStyle}
-                                    placeholder="Username (3-15 characters)"
-                                    value={username}
-                                    onChange={(e) => setUsername(e.target.value)}
-                                />
-
-                                <input
-                                    style={inputStyle}
-                                    type="email"
-                                    placeholder="Email Address"
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                />
-
-                                <input
-                                    style={inputStyle}
-                                    type="password"
-                                    placeholder="Password"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                />
-
-                                <input
-                                    style={inputStyle}
-                                    type="password"
-                                    placeholder="Confirm Password"
-                                    value={confirm}
-                                    onChange={(e) => setConfirm(e.target.value)}
-                                    onKeyPress={(e) => handleKeyPress(e, register)}
-                                />
-
-                                <div style={{
-                                    fontSize: "12px",
-                                    color: "#666",
-                                    marginBottom: "20px",
-                                    lineHeight: "1.6",
-                                    background: "#f8f9fa",
-                                    padding: "12px",
-                                    borderRadius: "8px"
-                                }}>
-                                    <strong>Password Requirements:</strong>
-                                    <br/>✓ Minimum 8 characters
-                                    <br/>✓ Uppercase & lowercase letters
-                                    <br/>✓ At least one number
-                                    <br/>✓ Special character (!@#$%^&*)
-                                </div>
-
-                                <button style={buttonStyle} onClick={register}>
-                                    Register
-                                </button>
-
-                                <button
-                                    style={{...buttonStyle, background: "#6c757d"}}
-                                    onClick={() => {
-                                        setPage("login");
-                                        clearFields();
-                                    }}
-                                >
-                                    Back to Login
-                                </button>
-                            </div>)}
-                    </>) : (<div>
-                        <div style={{textAlign: "center", marginBottom: "30px"}}>
-                            <div style={{fontSize: "64px", marginBottom: "20px"}}>✅</div>
-                            <h3 style={{
-                                color: "#28a745", marginBottom: "10px", fontWeight: "600"
-                            }}>
-                                Welcome, {loggedIn}!
-                            </h3>
-                            {userInfo && (<div style={{
-                                    display: "inline-block",
-                                    background: getRoleColor(userInfo.role),
-                                    color: "white",
-                                    padding: "8px 20px",
-                                    borderRadius: "20px",
-                                    fontSize: "14px",
-                                    fontWeight: "600",
-                                    marginTop: "10px"
-                                }}>
-                                    {userInfo.roleName}
-                                </div>)}
-                        </div>
-
+                    {twoFA && (<div style={{marginTop: "5px"}}>
                         <div style={{
-                            background: "#f8f9fa", padding: "20px", borderRadius: "10px", marginBottom: "20px"
+                            padding: "15px", marginBottom: "5px", textAlign: "center"
                         }}>
-                            <h4 style={{margin: "0 0 15px 0", color: "#333"}}>
-                                Available Resources
-                            </h4>
-                            {resources.map((resource) => (<div key={resource.id} style={{
-                                    background: "white",
-                                    padding: "15px",
-                                    marginBottom: "10px",
-                                    borderRadius: "8px",
-                                    border: `2px solid ${resource.hasAccess ? "#28a745" : "#dc3545"}`
-                                }}>
-                                    <div style={{
-                                        display: "flex", justifyContent: "space-between", alignItems: "center"
-                                    }}>
-                                        <div>
-                                            <h5 style={{margin: "0 0 5px 0"}}>
-                                                {resource.hasAccess ? "✅" : "🔒"} {resource.name}
-                                            </h5>
-                                            <p style={{
-                                                margin: "0", fontSize: "12px", color: "#666"
-                                            }}>
-                                                Required: {resource.requiredPermissions.join(", ")}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <button
-                                                style={{
-                                                    ...buttonStyle,
-                                                    marginBottom: "5px",
-                                                    padding: "8px 16px",
-                                                    fontSize: "12px"
-                                                }}
-                                                onClick={() => requestResourceAccess(resource.id)}
-                                            >
-                                                Request Access
-                                            </button>
-                                            {!resource.hasAccess && (<button
-                                                    style={{
-                                                        ...buttonStyle,
-                                                        background: "#f39c12",
-                                                        marginBottom: "0",
-                                                        padding: "8px 16px",
-                                                        fontSize: "12px"
-                                                    }}
-                                                    onClick={() => requestJITAccess(resource.id)}
-                                                >
-                                                    Request JIT ({jitDuration}m)
-                                                </button>)}
-                                        </div>
-                                    </div>
-                                </div>))}
+                            <p style={{
+                                margin: "0", fontSize: "16px", color: "#000", fontWeight: "500"
+                            }}>
+                                Check your email for the verification code
+                            </p>
                         </div>
-
+                        <input
+                            style={{
+                                ...inputStyle, fontSize: "15px", textAlign: "center",
+                            }}
+                            value={code}
+                            onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
+                            onKeyPress={(e) => handleKeyPress(e, verify2FA)}
+                            maxLength={6}
+                        />
+                        <button style={buttonStyle} onClick={verify2FA}>
+                            Verify Code
+                        </button>
                         <button
-                            style={{...buttonStyle, background: "#dc3545"}}
-                            onClick={logout}
+                            style={{...buttonStyle, background: "#6c757d"}}
+                            onClick={() => {
+                                setTwoFA(false);
+                                setCode("");
+                                setMessage("");
+                            }}
                         >
-                            Logout
+                            Cancel
                         </button>
                     </div>)}
 
-                {message && (<div style={{
-                        marginTop: "20px",
-                        padding: "15px",
-                        background: message.includes("error") || message.includes("Invalid") || message.includes("not") || message.includes("denied") || message.includes("must") || message.includes("required") ? "#fee" : "#e8f5e9",
-                        color: message.includes("error") || message.includes("Invalid") || message.includes("not") || message.includes("denied") || message.includes("must") || message.includes("required") ? "#c62828" : "#2e7d32",
-                        borderRadius: "10px",
-                        fontSize: "14px",
-                        textAlign: "center",
-                        borderLeft: `4px solid ${message.includes("error") || message.includes("Invalid") || message.includes("not") || message.includes("denied") || message.includes("must") || message.includes("required") ? "#c62828" : "#2e7d32"}`
+                    {!twoFA && (<>
+                        <button style={buttonStyle} onClick={login}>
+                            Login
+                        </button>
+                        <button
+                            style={{...buttonStyle, background: "#6c757d"}}
+                            onClick={() => {
+                                setPage("register");
+                                clearFields();
+                            }}
+                        >
+                            Create Account
+                        </button>
+                    </>)}
+                </div>) : (<div>
+                    <h3 style={{
+                        textAlign: "center", color: "#555", marginBottom: "25px", fontWeight: "500"
                     }}>
-                        {message}
+                        Create Account
+                    </h3>
+
+                    <input
+                        style={inputStyle}
+                        placeholder="Username (3-15 characters)"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                    />
+
+                    <input
+                        style={inputStyle}
+                        type="email"
+                        placeholder="Email Address"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                    />
+
+                    <input
+                        style={inputStyle}
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                    />
+
+                    <input
+                        style={inputStyle}
+                        type="password"
+                        placeholder="Confirm Password"
+                        value={confirm}
+                        onChange={(e) => setConfirm(e.target.value)}
+                        onKeyPress={(e) => handleKeyPress(e, register)}
+                    />
+
+                    <div style={{
+                        fontSize: "12px",
+                        color: "#666",
+                        marginBottom: "20px",
+                        lineHeight: "1.6",
+                        background: "#f8f9fa",
+                        padding: "12px",
+                        borderRadius: "8px"
+                    }}>
+                        <strong>Password Requirements:</strong>
+                        <br/>✓ Minimum 8 characters
+                        <br/>✓ Uppercase & lowercase letters
+                        <br/>✓ At least one number
+                        <br/>✓ Special character (!@#$%^&*)
+                    </div>
+
+                    <button style={buttonStyle} onClick={register}>
+                        Register
+                    </button>
+
+                    <button
+                        style={{...buttonStyle, background: "#6c757d"}}
+                        onClick={() => {
+                            setPage("login");
+                            clearFields();
+                        }}
+                    >
+                        Back to Login
+                    </button>
+                </div>)}
+            </>) : (<div>
+                <div style={{textAlign: "center", marginBottom: "30px"}}>
+                    <h3 style={{
+                        color: "#28a745", marginBottom: "10px", fontWeight: "600"
+                    }}>
+                        Welcome, {loggedIn}!
+                    </h3>
+                    {userInfo && (<div style={{
+                        display: "inline-block",
+                        background: getRoleColor(userInfo.role),
+                        color: "white",
+                        padding: "8px 20px",
+                        borderRadius: "20px",
+                        fontSize: "14px",
+                        fontWeight: "600",
+                        marginTop: "10px"
+                    }}>
+                        {userInfo.roleName}
                     </div>)}
-            </div>
-        </div>);
+                </div>
+
+                {/* Admin Panel Button */}
+                {userInfo && userInfo.permissions && userInfo.permissions.includes("manage_users") && (<button
+                    style={{
+                        ...buttonStyle, background: "#e74c3c", marginBottom: "20px"
+                    }}
+                    onClick={openAdminPanel}
+                >
+                    Admin Panel - Manage Users
+                </button>)}
+
+                {/* Admin Panel */}
+                {showAdminPanel && userInfo && userInfo.permissions && userInfo.permissions.includes("manage_users") && (
+                    <div style={{
+                        background: "#fff",
+                        padding: "20px",
+                        borderRadius: "10px",
+                        marginBottom: "20px",
+                        border: "2px solid #000"
+                    }}>
+                        <div style={{
+                            display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px"
+                        }}>
+                            <h4 style={{margin: "0", color: "#000"}}>
+                                Administrator Panel
+                            </h4>
+                            <button
+                                style={{
+                                    background: "transparent",
+                                    border: "none",
+                                    fontSize: "20px",
+                                    cursor: "pointer",
+                                    color: "#000"
+                                }}
+                                onClick={() => setShowAdminPanel(false)}
+                            >
+                                X
+                            </button>
+                        </div>
+
+                        <div style={{
+                            background: "white", padding: "15px", borderRadius: "8px", marginBottom: "15px"
+                        }}>
+                            <h5 style={{margin: "0 0 10px 0", color: "#000"}}>
+                                Change User Role
+                            </h5>
+
+                            <select
+                                style={{
+                                    ...inputStyle, marginBottom: "10px"
+                                }}
+                                value={selectedUser}
+                                onChange={(e) => setSelectedUser(e.target.value)}
+                            >
+                                <option value="">Select User</option>
+                                {allUsers.map((user) => (<option key={user.username} value={user.username}>
+                                    {user.username} - Current: {user.roleName}
+                                </option>))}
+                            </select>
+
+                            <select
+                                style={{
+                                    ...inputStyle, marginBottom: "10px"
+                                }}
+                                value={selectedRole}
+                                onChange={(e) => setSelectedRole(e.target.value)}
+                            >
+                                <option value="">Select New Role</option>
+                                <option value="admin">Administrator</option>
+                                <option value="manager">Manager</option>
+                                <option value="user">Regular User</option>
+                            </select>
+
+                            <button
+                                style={{
+                                    ...buttonStyle, background: "#28a745", marginBottom: "0"
+                                }}
+                                onClick={updateUserRole}
+                            >
+                                Update Role
+                            </button>
+                        </div>
+
+                        <div style={{
+                            background: "white", padding: "15px", borderRadius: "8px"
+                        }}>
+                            <h5 style={{margin: "0 0 10px 0", color: "#333"}}>
+                                All Users ({allUsers.length})
+                            </h5>
+                            <div style={{maxHeight: "200px", overflowY: "auto"}}>
+                                {allUsers.map((user) => (<div
+                                    key={user.username}
+                                    style={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "center",
+                                        background: "white",
+                                        padding: "15px",
+                                        marginBottom: "10px",
+                                        borderRadius: "8px",
+                                        border: "1px solid #000",
+                                    }}
+                                >
+                                    <div>
+                                        <strong>{user.username}</strong>
+                                        <br/>
+                                        <small style={{color: "#666"}}>
+                                            {user.email}
+                                        </small>
+                                    </div>
+                                    <div
+                                        style={{
+                                            background: getRoleColor(user.role),
+                                            color: "white",
+                                            padding: "5px 12px",
+                                            borderRadius: "12px",
+                                            fontSize: "12px",
+                                            fontWeight: "600"
+                                        }}
+                                    >
+                                        {user.roleName}
+                                    </div>
+                                </div>))}
+                            </div>
+                        </div>
+                    </div>)}
+
+                <div style={{
+                    background: "#fff",
+                    padding: "20px",
+                    borderRadius: "10px",
+                    marginBottom: "20px",
+                    border: "2px solid #000",
+
+                }}>
+                    <h4 style={{margin: "0 0 15px 0", color: "#000"}}>
+                        Available Resources
+                    </h4>
+                    {resources.map((resource) => (<div key={resource.id} style={{
+                        background: "white",
+                        padding: "15px",
+                        marginBottom: "10px",
+                        borderRadius: "8px",
+                        border: `1px solid ${resource.hasAccess ? "#28a745" : "#dc3545"}`
+                    }}>
+                        <div style={{
+                            display: "flex", justifyContent: "space-between", alignItems: "center"
+                        }}>
+                            <div>
+                                <h5 style={{margin: "0 0 5px 0"}}>
+                                    {resource.hasAccess ? "ACCESS GRANTED: " : "ACCESS DENIED: "} {resource.name}
+                                </h5>
+                                <p style={{
+                                    margin: "0", fontSize: "12px", color: "#666"
+                                }}>
+                                    Required: {resource.requiredPermissions.join(", ")}
+                                </p>
+                            </div>
+                            <div>
+                                <button
+                                    style={{
+                                        ...buttonStyle, marginBottom: "5px", padding: "8px 16px", fontSize: "12px"
+                                    }}
+                                    onClick={() => requestResourceAccess(resource.id)}
+                                >
+                                    Request Access
+                                </button>
+                                {!resource.hasAccess && (<button
+                                    style={{
+                                        ...buttonStyle,
+                                        background: "#f39c12",
+                                        marginBottom: "0",
+                                        padding: "8px 16px",
+                                        fontSize: "12px"
+                                    }}
+                                    onClick={() => requestJITAccess(resource.id)}
+                                >
+                                    Request JIT ({jitDuration}m)
+                                </button>)}
+                            </div>
+                        </div>
+                    </div>))}
+                </div>
+
+                <button
+                    style={{...buttonStyle, background: "#dc3545"}}
+                    onClick={logout}
+                >
+                    Logout
+                </button>
+            </div>)}
+
+            {message && (<div style={{
+                marginTop: "20px",
+                padding: "15px",
+                background: message.includes("error") || message.includes("Invalid") || message.includes("not") || message.includes("denied") || message.includes("must") || message.includes("required") ? "#fee" : "#e8f5e9",
+                color: message.includes("error") || message.includes("Invalid") || message.includes("not") || message.includes("denied") || message.includes("must") || message.includes("required") ? "#c62828" : "#2e7d32",
+                borderRadius: "10px",
+                fontSize: "14px",
+                textAlign: "center",
+                borderLeft: `4px solid ${message.includes("error") || message.includes("Invalid") || message.includes("not") || message.includes("denied") || message.includes("must") || message.includes("required") ? "#c62828" : "#2e7d32"}`
+            }}>
+                {message}
+            </div>)}
+        </div>
+    </div>);
 }
 
 const inputStyle = {
     width: "100%",
-    padding: "14px 16px",
-    marginBottom: "15px",
-    border: "2px solid #e0e0e0",
-    borderRadius: "10px",
+    border: "1px solid #000",
     fontSize: "14px",
     boxSizing: "border-box",
     outline: "none",
     transition: "all 0.3s",
-    fontFamily: "inherit"
+    fontFamily: "inherit",
+    background: "white",
+    padding: "15px",
+    marginBottom: "10px",
+    borderRadius: "8px",
 };
 
 const buttonStyle = {
     width: "100%",
     padding: "14px",
     marginBottom: "12px",
-    background: "#667eea",
+    background: "#000",
     color: "white",
     border: "none",
     borderRadius: "10px",
