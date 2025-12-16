@@ -19,7 +19,6 @@ app.use(cors({
 let transporter;
 
 async function createEmailTransporter() {
-    // For production, replace with real SMTP credentials
     let testAccount = await nodemailer.createTestAccount();
 
     transporter = nodemailer.createTransport({
