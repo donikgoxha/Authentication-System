@@ -19,13 +19,17 @@ function App() {
     const [allUsers, setAllUsers] = useState([]);
     const [selectedUser, setSelectedUser] = useState("");
     const [selectedRole, setSelectedRole] = useState("");
+    const [showCertPanel, setShowCertPanel] = useState(false);
+    const [certificates, setCertificates] = useState([]);
+    const [generatingCerts, setGeneratingCerts] = useState(false);
 
-    const API_URL = "http://localhost:5002";
+    const API_URL = "";
 
     useEffect(() => {
         if (loggedIn && sessionId) {
             fetchUserInfo();
             fetchResources();
+            fetchCertificates();
         }
     }, [loggedIn, sessionId]);
 
@@ -64,6 +68,44 @@ function App() {
         } catch (error) {
             console.error("Error fetching resources:", error);
         }
+    }
+
+    async function fetchCertificates() {
+        try {
+            const res = await fetch(`${API_URL}/certificates/list`, {
+                headers: {"x-session-id": sessionId}
+            });
+            const data = await res.json();
+            if (data.success) {
+                setCertificates(data.certificates);
+            }
+        } catch (error) {
+            console.error("Error fetching certificates:", error);
+        }
+    }
+
+    async function generatePKIHierarchy() {
+        setGeneratingCerts(true);
+        try {
+            const res = await fetch(`${API_URL}/certificates/generate-hierarchy`, {
+                method: "POST", headers: {"x-session-id": sessionId}
+            });
+            const data = await res.json();
+            setMessage(data.message);
+            if (data.success) {
+                await fetchCertificates();
+                console.log("Generated certificates:", data.certificates);
+            }
+        } catch (error) {
+            console.error("Error generating certificates:", error);
+            setMessage("Error generating certificates");
+        } finally {
+            setGeneratingCerts(false);
+        }
+    }
+
+    function downloadCertificate(filename) {
+        window.open(`${API_URL}/certificates/download/${filename}`, '_blank');
     }
 
     function validateRegistration() {
@@ -215,6 +257,7 @@ function App() {
             setSessionId(null);
             setUserInfo(null);
             setResources([]);
+            setCertificates([]);
             clearFields();
             setTwoFA(false);
             setMessage("Logged out successfully.");
@@ -299,7 +342,7 @@ function App() {
             setMessage(data.message);
 
             if (data.success) {
-                fetchAllUsers(); // Refresh user list
+                fetchAllUsers();
                 setSelectedUser("");
                 setSelectedRole("");
             }
@@ -347,7 +390,7 @@ function App() {
             borderRadius: "20px",
             boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
             padding: "40px 30px",
-            maxWidth: loggedIn ? "800px" : "400px",
+            maxWidth: loggedIn ? "900px" : "400px",
             width: "100%"
         }}>
             <div style={{textAlign: "center"}}>
@@ -519,6 +562,126 @@ function App() {
                     </div>)}
                 </div>
 
+                {/* Certificate Management Button */}
+                <button
+                    style={{
+                        ...buttonStyle, background: "#9b59b6", marginBottom: "20px"
+                    }}
+                    onClick={() => setShowCertPanel(!showCertPanel)}
+                >
+                    PKI Certificate Management Window
+                </button>
+
+                {/* Certificate Panel */}
+                {showCertPanel && (<div style={{
+                    background: "#fff",
+                    padding: "20px",
+                    borderRadius: "10px",
+                    marginBottom: "20px",
+                    border: "2px solid #9b59b6"
+                }}>
+                    <div style={{
+                        display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "15px"
+                    }}>
+                        <h4 style={{margin: "0", color: "#9b59b6"}}>
+                            PKI Infrastructure
+                        </h4>
+                        <button
+                            style={{
+                                background: "transparent",
+                                border: "none",
+                                fontSize: "20px",
+                                cursor: "pointer",
+                                color: "#000"
+                            }}
+                            onClick={() => setShowCertPanel(false)}
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    {/*<div style={{*/}
+                    {/*    background: "#f8f9fa",*/}
+                    {/*    padding: "15px",*/}
+                    {/*    borderRadius: "8px",*/}
+                    {/*    marginBottom: "15px",*/}
+                    {/*    fontSize: "14px",*/}
+                    {/*    lineHeight: "1.6"*/}
+                    {/*}}>*/}
+                    {/*    <strong>Requirements:</strong>*/}
+                    {/*    <br/>• Generate Root CA (FINKI CA) - self-signed*/}
+                    {/*    <br/>• Generate Intermediate CA (IB CA) - signed by FINKI CA*/}
+                    {/*    <br/>• Generate Intermediate CA (Lab CA) - signed by IB CA*/}
+                    {/*    <br/>• Generate Server Certificate - signed by Lab CA*/}
+                    {/*    <br/>• Generate Client Certificate - signed by Lab CA*/}
+                    {/*</div>*/}
+
+                    <button
+                        style={{
+                            ...buttonStyle, background: generatingCerts ? "#95a5a6" : "#27ae60", marginBottom: "15px"
+                        }}
+                        onClick={generatePKIHierarchy}
+                        disabled={generatingCerts}
+                    >
+                        {generatingCerts ? "⏳ Generating Certificates..." : "Generate PKI Hierarchy"}
+                    </button>
+
+                    {certificates.length > 0 && (<div style={{
+                        background: "white", padding: "15px", borderRadius: "8px", border: "1px solid #ddd"
+                    }}>
+                        <h5 style={{margin: "0 0 10px 0", color: "#333"}}>
+                            Generated Certificates ({certificates.length})
+                        </h5>
+                        <div style={{maxHeight: "200px", overflowY: "auto"}}>
+                            {certificates.map((cert) => (<div
+                                key={cert}
+                                style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    background: "#f8f9fa",
+                                    padding: "10px 15px",
+                                    marginBottom: "8px",
+                                    borderRadius: "6px",
+                                    border: "1px solid #dee2e6"
+                                }}
+                            >
+                                                    <span style={{fontFamily: "monospace", fontSize: "13px"}}>
+                                                        {cert}
+                                                    </span>
+                                <button
+                                    style={{
+                                        background: "#3498db",
+                                        color: "white",
+                                        border: "none",
+                                        padding: "5px 12px",
+                                        borderRadius: "4px",
+                                        fontSize: "12px",
+                                        cursor: "pointer"
+                                    }}
+                                    onClick={() => downloadCertificate(cert)}
+                                >
+                                    Download
+                                </button>
+                            </div>))}
+                        </div>
+                    </div>)}
+
+                    <div style={{
+                        background: "#fff3cd",
+                        padding: "12px",
+                        borderRadius: "6px",
+                        marginTop: "15px",
+                        fontSize: "13px",
+                        color: "#856404",
+                        border: "1px solid #ffeaa7"
+                    }}>
+                        💡 <strong>Note:</strong> Certificates are saved in the ./certificates directory on
+                        the server.
+                        Each certificate includes both .crt (certificate) and .key (private key) files.
+                    </div>
+                </div>)}
+
                 {/* Admin Panel Button */}
                 {userInfo && userInfo.permissions && userInfo.permissions.includes("manage_users") && (<button
                     style={{
@@ -554,7 +717,7 @@ function App() {
                                 }}
                                 onClick={() => setShowAdminPanel(false)}
                             >
-                                X
+                                ✕
                             </button>
                         </div>
 
@@ -583,8 +746,7 @@ function App() {
                                     ...inputStyle, marginBottom: "10px"
                                 }}
                                 value={selectedRole}
-                                onChange={(e) => setSelectedRole(e.target.value)}
-                            >
+                                onChange={(e) => setSelectedRole(e.target.value)}>
                                 <option value="">Select New Role</option>
                                 <option value="admin">Administrator</option>
                                 <option value="manager">Manager</option>
@@ -595,8 +757,7 @@ function App() {
                                 style={{
                                     ...buttonStyle, background: "#28a745", marginBottom: "0"
                                 }}
-                                onClick={updateUserRole}
-                            >
+                                onClick={updateUserRole}>
                                 Update Role
                             </button>
                         </div>
@@ -619,8 +780,7 @@ function App() {
                                         marginBottom: "10px",
                                         borderRadius: "8px",
                                         border: "1px solid #000",
-                                    }}
-                                >
+                                    }}>
                                     <div>
                                         <strong>{user.username}</strong>
                                         <br/>
@@ -636,8 +796,7 @@ function App() {
                                             borderRadius: "12px",
                                             fontSize: "12px",
                                             fontWeight: "600"
-                                        }}
-                                    >
+                                        }}>
                                         {user.roleName}
                                     </div>
                                 </div>))}
@@ -651,7 +810,6 @@ function App() {
                     borderRadius: "10px",
                     marginBottom: "20px",
                     border: "2px solid #000",
-
                 }}>
                     <h4 style={{margin: "0 0 15px 0", color: "#000"}}>
                         Available Resources
@@ -681,8 +839,7 @@ function App() {
                                     style={{
                                         ...buttonStyle, marginBottom: "5px", padding: "8px 16px", fontSize: "12px"
                                     }}
-                                    onClick={() => requestResourceAccess(resource.id)}
-                                >
+                                    onClick={() => requestResourceAccess(resource.id)}>
                                     Request Access
                                 </button>
                                 {!resource.hasAccess && (<button
@@ -693,8 +850,7 @@ function App() {
                                         padding: "8px 16px",
                                         fontSize: "12px"
                                     }}
-                                    onClick={() => requestJITAccess(resource.id)}
-                                >
+                                    onClick={() => requestJITAccess(resource.id)}>
                                     Request JIT ({jitDuration}m)
                                 </button>)}
                             </div>
@@ -704,8 +860,7 @@ function App() {
 
                 <button
                     style={{...buttonStyle, background: "#dc3545"}}
-                    onClick={logout}
-                >
+                    onClick={logout}>
                     Logout
                 </button>
             </div>)}

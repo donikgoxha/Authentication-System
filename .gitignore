@@ -44,3 +44,11 @@ data.json
 # =============================
 .env
 .env.local
+
+# =============================
+# SECURITY: Certificates & Keys
+# =============================
+certificates/
+*.crt
+*.key
+*.pem
