@@ -23,7 +23,7 @@ function App() {
     const [certificates, setCertificates] = useState([]);
     const [generatingCerts, setGeneratingCerts] = useState(false);
 
-    const API_URL = "";
+    const API_URL = "http://localhost:5002";
 
     useEffect(() => {
         if (loggedIn && sessionId) {
@@ -78,6 +78,8 @@ function App() {
             const data = await res.json();
             if (data.success) {
                 setCertificates(data.certificates);
+            } else {
+                console.error("Certificate fetch error:", data.message);
             }
         } catch (error) {
             console.error("Error fetching certificates:", error);
@@ -104,8 +106,29 @@ function App() {
         }
     }
 
-    function downloadCertificate(filename) {
-        window.open(`${API_URL}/certificates/download/${filename}`, '_blank');
+    async function downloadCertificate(filename) {
+        try {
+            const res = await fetch(`${API_URL}/certificates/download/${filename}`, {
+                headers: {"x-session-id": sessionId}
+            });
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            } else {
+                const data = await res.json();
+                setMessage(data.message);
+            }
+        } catch (error) {
+            console.error("Download error:", error);
+            setMessage("Error downloading certificate");
+        }
     }
 
     function validateRegistration() {
@@ -599,22 +622,6 @@ function App() {
                             ✕
                         </button>
                     </div>
-
-                    {/*<div style={{*/}
-                    {/*    background: "#f8f9fa",*/}
-                    {/*    padding: "15px",*/}
-                    {/*    borderRadius: "8px",*/}
-                    {/*    marginBottom: "15px",*/}
-                    {/*    fontSize: "14px",*/}
-                    {/*    lineHeight: "1.6"*/}
-                    {/*}}>*/}
-                    {/*    <strong>Requirements:</strong>*/}
-                    {/*    <br/>• Generate Root CA (FINKI CA) - self-signed*/}
-                    {/*    <br/>• Generate Intermediate CA (IB CA) - signed by FINKI CA*/}
-                    {/*    <br/>• Generate Intermediate CA (Lab CA) - signed by IB CA*/}
-                    {/*    <br/>• Generate Server Certificate - signed by Lab CA*/}
-                    {/*    <br/>• Generate Client Certificate - signed by Lab CA*/}
-                    {/*</div>*/}
 
                     <button
                         style={{

@@ -15,8 +15,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = 5002;
 const DB_FILE = "./data.json";
-const CERT_DIR = "./certificates";
 const SALT_ROUNDS = 10;
+const CERT_DIR = path.join(__dirname, "certificates");
 
 app.use(express.json());
 app.use(cors({
@@ -359,13 +359,20 @@ app.get("/certificates/download/:filename", (req, res) => {
     }
 
     const filename = req.params.filename;
-    const filepath = `${CERT_DIR}/${filename}`;
+
+    if (!filename.endsWith('.crt')) {
+        return res.status(403).json({
+            success: false, message: "Only certificate files (.crt) can be downloaded"
+        });
+    }
+
+    const filepath = path.join(CERT_DIR, filename);
 
     if (fs.existsSync(filepath)) {
         res.download(filepath);
     } else {
         res.status(404).json({
-            success: false, message: "Certificate not found"
+            success: false, message: `Certificate not found at ${filepath}`
         });
     }
 });
@@ -465,12 +472,11 @@ app.post("/login", async (req, res) => {
         }
 
         if (db.users[username].twoFAEnabled) {
-            const code = issue2FACode(username, db.users[username].email);
+            issue2FACode(username, db.users[username].email);
             return res.json({
                 success: true,
                 twoFA: true,
-                message: "2FA code sent to your email. Check server console for preview link.",
-                code
+                message: "2FA code sent to your email. Check server console for preview link."
             });
         }
 
@@ -754,13 +760,6 @@ function startHTTPSServer(username) {
     const serverCertPath = path.join(CERT_DIR, `server_${username}.crt`);
     const serverKeyPath = path.join(CERT_DIR, `server_${username}.key`);
 
-    if (!fs.existsSync(serverCertPath) || !fs.existsSync(serverKeyPath)) {
-        console.error('\n❌ ERROR: Server certificates not found!');
-        console.error(`Looking for: server_${username}.crt`);
-        console.error('Please generate certificates first using the app.\n');
-        process.exit(1);
-    }
-
     try {
         const options = {
             key: fs.readFileSync(serverKeyPath), cert: fs.readFileSync(serverCertPath),
@@ -770,8 +769,8 @@ function startHTTPSServer(username) {
 
         server.listen(PORT, () => {
             console.log('\n🔒 ============================================');
-            console.log(`✅ HTTPS Server running on https://localhost:${PORT}`);
-            console.log(`📜 Certificate: server_${username}.crt`);
+            console.log(`HTTPS Server running on https://localhost:${PORT}`);
+            console.log(`Certificate: server_${username}.crt`);
             console.log('============================================\n');
         });
 
@@ -782,11 +781,15 @@ function startHTTPSServer(username) {
 }
 
 const usernameArg = process.argv[2];
+const forceHttp = process.argv.includes('--http');
 
 if (!usernameArg) {
-    console.log('\n⚠️  WARNING: No username provided.');
-    console.log('   Usage: node server.js <username>');
     process.exit(1);
+} else if (forceHttp) {
+    app.listen(PORT, () => {
+        console.log(`HTTP Server running on http://localhost:${PORT}`);
+        console.log('Running in HTTP mode - generate certificates then restart without --http');
+    });
 } else {
     startHTTPSServer(usernameArg);
 }
